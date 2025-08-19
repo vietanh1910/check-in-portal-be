@@ -3,14 +3,10 @@ package com.example.hunter_point.controller;
 
 import com.example.hunter_point.dto.request.CampaignRequest;
 import com.example.hunter_point.dto.response.CampaignResponse;
-import com.example.hunter_point.entity.Campaign;
 import com.example.hunter_point.entity.enums.ERole;
-import com.example.hunter_point.exception.ResourceNotFoundException;
-import com.example.hunter_point.repository.CampaignRepository;
 import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CampaignService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
