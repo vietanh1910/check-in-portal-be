@@ -34,12 +34,12 @@ public class CampaignController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<CampaignResponse>> getAllCampaigns() {
+    public ResponseEntity<List<CampaignResponse>> getAllCampaigns(CampaignRequest requestDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         List<CampaignResponse> campaigns;
-        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ERole.ROLE_ADMIN.name()))) {
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
             campaigns = campaignService.getAllCampaigns();
         } else {
             campaigns = campaignService.getCampaignsByAllocator(userDetails.getId());
@@ -57,15 +57,15 @@ public class CampaignController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ALLOCATOR', 'ADMIN')")
     public ResponseEntity<CampaignResponse> updateCampaign(@PathVariable Long id, @RequestBody CampaignRequest requestDTO) {
-        checkOwnership(id); // Kiểm tra quyền sở hữu
+        checkOwnership(id);
         CampaignResponse updatedCampaign = campaignService.updateCampaign(id, requestDTO);
         return ResponseEntity.ok(updatedCampaign);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ALLOCATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCampaign(@PathVariable Long id) {
-        checkOwnership(id); // Kiểm tra quyền sở hữu
+        checkOwnership(id);
         campaignService.deleteCampaign(id);
         return ResponseEntity.noContent().build();
     }
@@ -75,7 +75,7 @@ public class CampaignController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(ERole.ROLE_ADMIN.name()))) {
+                .anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
             return;
         }
 

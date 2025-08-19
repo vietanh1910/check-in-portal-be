@@ -1,6 +1,5 @@
 package com.example.hunter_point.entity;
 
-
 import com.example.hunter_point.entity.enums.CampaignStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,18 +24,16 @@ public class Campaign {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Quan hệ với Allocator (User)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "allocator_id", nullable = false)
     private User allocator;
 
-    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    // location
     private String locationName;
 
     @Column(precision = 10, scale = 8, nullable = false)
@@ -47,29 +44,42 @@ public class Campaign {
 
     private Integer radiusMeters;
 
+    // wifi
     private String requiredWifiSsid;
-
     private String requiredWifiBssid;
 
+    // reward
     @Column(nullable = false)
-    private Integer pointsPerCheckin;
+    private Integer pointsPerCheckin; // map sang rewardPerCheckin
 
     private Integer maxCheckinsPerUser;
 
     @Column(precision = 15, scale = 2, nullable = false)
-    private BigDecimal totalBudget;
+    private BigDecimal totalBudget; // map sang pointBudget
 
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal remainingBudget;
 
+    // thời gian
     @Column(nullable = false)
     private LocalDateTime startDate;
 
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    // thêm giờ riêng nếu FE cần
+    private String startTime;
+    private String endTime;
+
+    // QR Code
+    @Column(columnDefinition = "TEXT")
+    private String qrUrl;
+
+    // thống kê
+    private Integer used = 0;      // số lần đã sử dụng
+    private Integer checkIns = 0;  // số lượt checkin
+
     @Enumerated(EnumType.STRING)
-    @Column(length = 50)
     private CampaignStatus status;
 
     @Column(columnDefinition = "TEXT")
@@ -88,3 +98,4 @@ public class Campaign {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }
+
