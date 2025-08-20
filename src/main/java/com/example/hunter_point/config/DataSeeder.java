@@ -56,5 +56,17 @@ public class DataSeeder implements CommandLineRunner {
 
             userRepository.save(admin);
         }
+
+        if (userRepository.findByEmail("allocator-test@gmail.com").isEmpty()) {
+            User admin = User.builder()
+                    .email("allocator-test@gmail.com")
+                    .password(passwordEncoder.encode("allocator123"))
+                    .role(ERole.ALLOCATOR)
+                    .status(UserStatus.ACTIVE)
+                    .emailVerified(true)
+                    .build();
+
+            userRepository.save(admin);
+        }
     }
 }

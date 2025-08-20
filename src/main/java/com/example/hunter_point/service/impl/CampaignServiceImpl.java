@@ -4,18 +4,32 @@ import com.example.hunter_point.dto.request.CampaignRequest;
 import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.dto.LocationDTO;
 import com.example.hunter_point.dto.WifiDTO;
+import com.example.hunter_point.dto.response.UserResponse;
 import com.example.hunter_point.entity.Campaign;
 import com.example.hunter_point.entity.User;
 import com.example.hunter_point.entity.enums.CampaignStatus;
+import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.exception.ResourceNotFoundException;
 import com.example.hunter_point.repository.CampaignRepository;
 import com.example.hunter_point.repository.UserRepository;
+import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CampaignService;
+import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.GetDetailResponse;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +38,6 @@ public class CampaignServiceImpl implements CampaignService {
     private final CampaignRepository campaignRepository;
     private final UserRepository userRepository;
 
-    // Định dạng ngày giờ theo yêu cầu của FE
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -38,12 +51,14 @@ public class CampaignServiceImpl implements CampaignService {
     // --- CREATE ---
     @Transactional
     @Override
-    public CampaignResponse createCampaign(CampaignRequest requestDTO, Long allocatorId) {
-        User allocator = userRepository.findById(allocatorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Allocator not found with id: " + allocatorId));
-
+    public SimpleResponse createCampaign(CampaignRequest requestDTO) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findById(userDetails.getId());
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
         Campaign campaign = Campaign.builder()
-                .allocator(allocator)
+                .allocator(userOptional.get())
                 .name(requestDTO.getName())
                 .description(requestDTO.getDescription())
                 .locationName(requestDTO.getLocationName())
@@ -60,34 +75,67 @@ public class CampaignServiceImpl implements CampaignService {
                 .status(requestDTO.getStatus() != null ? requestDTO.getStatus() : CampaignStatus.PENDING)
                 .build();
 
-        Campaign savedCampaign = campaignRepository.save(campaign);
-        return mapToResponseDTO(savedCampaign);
+        campaignRepository.save(campaign);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
     // --- READ ---
     @Override
-    public CampaignResponse getCampaignById(Long id) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
-        return mapToResponseDTO(campaign);
-    }
-
-    @Override
-    public List<CampaignResponse> getAllCampaigns() {
-        return campaignRepository.findAll().stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CampaignResponse> getCampaignsByAllocator(Long allocatorId) {
-        if (!userRepository.existsById(allocatorId)) {
-            throw new ResourceNotFoundException("Allocator not found with id: " + allocatorId);
+    public GetDetailResponse<CampaignResponse> getCampaignById(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorGetDetailResponse("Campaign ID cannot be null");
         }
-        return campaignRepository.findByAllocatorId(allocatorId).stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        Optional<Campaign> campaignOptional = campaignRepository.findById(id);
+        if (campaignOptional.isEmpty()) {
+            return GenerateResponse.generateErrorGetDetailResponse("Campaign not found with id: " + id);
+        }
+        Campaign campaign = campaignOptional.get();
+        CampaignResponse campaignResponse = mapToResponseDTO(campaign);
+        return GenerateResponse.generateSuccessGetDetailResponse(campaignResponse);
     }
+
+    @Override
+    public ListResponse<CampaignResponse> getAllCampaigns(CampaignRequest requestDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Pageable pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getSize());
+
+        Page<Campaign> pageResult;
+
+        if (authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
+            // ADMIN: Lấy tất cả
+            pageResult = campaignRepository.findAll(pageable);
+
+        } else if (authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(ERole.ALLOCATOR.name()))) {
+            // ALLOCATOR: Lấy campaign do allocator này tạo
+            pageResult = campaignRepository.findByAllocatorId(userDetails.getId(), pageable);
+
+        } else {
+            // USER: Tính khoảng cách -> xa dần
+            var lat = requestDTO.getLatitude();
+            var lon = requestDTO.getLongitude();
+
+            if (lat == null || lon == null) {
+                return GenerateResponse.generateErrorListResponse("Latitude and Longitude are required for USER role");
+            }
+
+            // repository query native SQL để sort theo khoảng cách
+            pageResult = campaignRepository.findByDistanceDesc(lat, lon, pageable);
+        }
+
+        // map to response DTO
+        List<CampaignResponse> responseList = pageResult.getContent()
+                .stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+
+        return GenerateResponse.generateSuccessListResponse(
+                responseList,
+                pageResult.getTotalElements());
+    }
+
 
     // --- UPDATE ---
     @Transactional

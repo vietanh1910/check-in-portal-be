@@ -2,24 +2,23 @@ package com.example.hunter_point.service;
 
 import com.example.hunter_point.dto.request.CampaignRequest;
 import com.example.hunter_point.dto.response.CampaignResponse;
+import com.example.hunter_point.utils.response.GetDetailResponse;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 public interface CampaignService {
     // --- CREATE ---
-    @Transactional
-    CampaignResponse createCampaign(CampaignRequest requestDTO, Long allocatorId);
+    SimpleResponse createCampaign(CampaignRequest requestDTO);
 
     // --- READ ---
-    CampaignResponse getCampaignById(Long id);
+    GetDetailResponse<CampaignResponse> getCampaignById(Long id);
 
-    List<CampaignResponse> getAllCampaigns();
-
-    List<CampaignResponse> getCampaignsByAllocator(Long allocatorId);
+    ListResponse<CampaignResponse> getAllCampaigns(CampaignRequest requestDTO);
 
     // --- UPDATE ---
-    @Transactional
     CampaignResponse updateCampaign(Long id, CampaignRequest requestDTO);
 
     // --- DELETE ---

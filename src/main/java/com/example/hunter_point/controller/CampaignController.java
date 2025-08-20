@@ -6,6 +6,10 @@ import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CampaignService;
+import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.GetDetailResponse;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,32 +30,35 @@ public class CampaignController {
 
     @PostMapping
     @PreAuthorize("hasRole('ALLOCATOR')")
-    public ResponseEntity<CampaignResponse> createCampaign(@RequestBody CampaignRequest requestDTO) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        CampaignResponse createdCampaign = campaignService.createCampaign(requestDTO, userDetails.getId());
-        return new ResponseEntity<>(createdCampaign, HttpStatus.CREATED);
+    public SimpleResponse createCampaign(@RequestBody CampaignRequest requestDTO) {
+        try {
+            return campaignService.createCampaign(requestDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<CampaignResponse>> getAllCampaigns(CampaignRequest requestDTO) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        List<CampaignResponse> campaigns;
-        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
-            campaigns = campaignService.getAllCampaigns();
-        } else {
-            campaigns = campaignService.getCampaignsByAllocator(userDetails.getId());
+    public ListResponse<CampaignResponse> getAllCampaigns(CampaignRequest requestDTO) {
+        try {
+            return campaignService.getAllCampaigns(requestDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorListResponse("BAD_REQUEST");
         }
-        return ResponseEntity.ok(campaigns);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CampaignResponse> getCampaignById(@PathVariable Long id) {
-        CampaignResponse campaign = campaignService.getCampaignById(id);
-        return ResponseEntity.ok(campaign);
+    public GetDetailResponse<CampaignResponse> getCampaignById(@PathVariable Long id) {
+        try {
+            return campaignService.getCampaignById(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorGetDetailResponse("BAD_REQUEST");
+        }
     }
 
     @PutMapping("/{id}")
