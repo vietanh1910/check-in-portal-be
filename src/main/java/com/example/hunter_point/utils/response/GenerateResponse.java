@@ -9,8 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 public class GenerateResponse {
 
-	private static int SUCCESS_CODE = 20000;
-	private static int ERROR_CODE = 10000;
+	private static final int SUCCESS_CODE = 20000;
+	private static final int ERROR_CODE = 10000;
 	public static final int INVALID_TOKEN_ERROR_CODE = 400000;
 	public static final int PERMISSION_DENIED_ERROR_CODE = 50001;
 
@@ -71,10 +71,9 @@ public class GenerateResponse {
 		return res;
 	}
 
-	public static <T> DetailResponse<T> generateErrorDetailResponse(int statuscode, String message) {
+	public static <T> DetailResponse<T> generateErrorDetailResponse() {
 		DetailResponse<T> res = new DetailResponse<T>();
-		res.setCode(statuscode);
-		res.setMessage(message);
+		res.setCode(ERROR_CODE);
 		return res;
 	}
 
@@ -95,7 +94,7 @@ public class GenerateResponse {
 
 	public static <T> GetDetailResponse<T> generateErrorGetDetailResponse(T item) {
 		GetDetailResponse<T> res = new GetDetailResponse<T>();
-		res.setCode(SUCCESS_CODE);
+		res.setCode(ERROR_CODE);
 		res.setData(item);
 		return res;
 	}

@@ -6,8 +6,7 @@ import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.entity.enums.UserStatus;
 import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.service.UserService;
-import com.example.hunter_point.utils.response.GenerateResponse;
-import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.*;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -61,53 +60,78 @@ public class UserServiceImpl implements UserService {
             return cb.and(predicates.toArray(new Predicate[0]));
         }, pageable);
 
-        // map entity -> DTO
         List<UserResponse> responseDTOS = pageResult.getContent()
                 .stream()
                 .map(this::mapToDTO)
                 .toList();
 
-        // dùng helper giống mẫu
         return GenerateResponse.generateSuccessListResponse(
                 responseDTOS,
                 pageResult.getTotalElements()
         );
     }
 
-
     @Override
-    public Optional<UserResponse> getUserById(Long id) {
-        return userRepository.findById(id).map(this::mapToDTO);
+    public GetDetailResponse<UserResponse> getUserById(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorGetDetailResponse("User ID cannot be null");
+        }
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorGetDetailResponse("User not found");
+        }
+        User user = userOptional.get();
+        UserResponse userResponse = mapToDTO(user);
+        return GenerateResponse.generateSuccessGetDetailResponse(userResponse);
     }
 
     @Override
-    public UserResponse updateUser(Long id, UserResponse updateDto) {
-        User existing = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        existing.setFullName(updateDto.getFullName());
-        existing.setPhone(updateDto.getPhone());
-        existing.setAvatarUrl(updateDto.getAvatarUrl());
-        existing.setRole(updateDto.getRole());
-        existing.setStatus(updateDto.getStatus());
-
-        return mapToDTO(userRepository.save(existing));
+    public SimpleResponse updateUser(Long id, UserResponse updateDto) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("User ID cannot be null");
+        }
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+        User user = userOptional.get();
+        user.setFullName(updateDto.getFullName());
+        user.setPhone(updateDto.getPhone());
+        user.setAvatarUrl(updateDto.getAvatarUrl());
+        user.setRole(updateDto.getRole());
+        user.setStatus(updateDto.getStatus());
+        userRepository.save(user);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
     @Override
-    public UserResponse approveUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public SimpleResponse approveUser(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("User ID cannot be null");
+        }
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+        User user = userOptional.get();
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(true);
-        return mapToDTO(userRepository.save(user));
+        userRepository.save(user);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
     @Override
-    public void blockUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public SimpleResponse blockUser(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("User ID cannot be null");
+        }
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+        User user = userOptional.get();
         user.setStatus(UserStatus.BANNED);
         userRepository.save(user);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 }

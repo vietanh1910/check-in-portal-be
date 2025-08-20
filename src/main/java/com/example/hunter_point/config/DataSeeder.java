@@ -43,7 +43,18 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
 
             userRepository.save(admin);
-            System.out.println("✅ Admin user created: admin@gmail.com / admin123");
+        }
+
+        if (userRepository.findByEmail("user-test@gmail.com").isEmpty()) {
+            User admin = User.builder()
+                    .email("user-test@gmail.com")
+                    .password(passwordEncoder.encode("user123"))
+                    .role(ERole.USER)
+                    .status(UserStatus.ACTIVE)
+                    .emailVerified(true)
+                    .build();
+
+            userRepository.save(admin);
         }
     }
 }

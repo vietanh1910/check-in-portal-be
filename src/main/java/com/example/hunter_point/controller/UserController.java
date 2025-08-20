@@ -4,7 +4,7 @@ import com.example.hunter_point.dto.response.UserResponse;
 import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.entity.enums.UserStatus;
 import com.example.hunter_point.service.UserService;
-import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,37 +33,52 @@ public class UserController {
         return userService.searchUsers(keyword, role, status, pageable);
     }
 
-
-
     // Get user detail
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public GetDetailResponse<UserResponse> getUser(@PathVariable Long id) {
+        try {
+            return userService.getUserById(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorGetDetailResponse();
+        }
     }
 
     // Update user
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
-                                                      @RequestBody UserResponse updateDto) {
-        return ResponseEntity.ok(userService.updateUser(id, updateDto));
+    public SimpleResponse updateUser(@PathVariable Long id, @RequestBody UserResponse updateDto) {
+        try {
+            return userService.updateUser(id, updateDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 
     // Approve user
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/approve")
-    public ResponseEntity<UserResponse> approveUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.approveUser(id));
+    public SimpleResponse approveUser(@PathVariable Long id) {
+        try {
+            return userService.approveUser(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateSuccessSimpleResponse();
+        }
     }
 
     // Block user
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/block")
-    public ResponseEntity<Void> blockUser(@PathVariable Long id) {
+    public SimpleResponse blockUser(@PathVariable Long id) {
         userService.blockUser(id);
-        return ResponseEntity.noContent().build();
+        try {
+            return userService.blockUser(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateSuccessSimpleResponse();
+        }
     }
 }
