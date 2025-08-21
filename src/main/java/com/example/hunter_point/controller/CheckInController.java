@@ -1,12 +1,15 @@
 package com.example.hunter_point.controller;
 
+import com.example.hunter_point.dto.request.CheckinRequest;
 import com.example.hunter_point.dto.response.CheckInResponse;
 import com.example.hunter_point.service.CheckInService;
+import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/check-ins")
@@ -17,24 +20,50 @@ public class CheckInController {
 
     // Lấy tất cả check-in theo campaign
     @GetMapping("/campaign/{campaignId}")
-    public ResponseEntity<List<CheckInResponse>> getByCampaign(@PathVariable Long campaignId) {
-        return ResponseEntity.ok(checkInService.getCheckInsByCampaign(campaignId));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ListResponse<CheckInResponse> getByCampaign(
+            @PathVariable Long campaignId,
+            @PathVariable int page,
+            @PathVariable int size
+            ) {
+        try {
+            return checkInService.getCheckInsByCampaign(campaignId, page, size);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorListResponse("BAD_REQUEST");
+        }
     }
 
     // Lấy tất cả check-in theo user
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<CheckInResponse>> getByUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(checkInService.getCheckInsByUser(userId));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ListResponse<CheckInResponse> getByUser(
+            @PathVariable Long userId,
+            @PathVariable int page,
+            @PathVariable int size
+    ) {
+        try {
+            return checkInService.getCheckInsByUser(userId, page, size);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorListResponse("BAD_REQUEST");
+        }
     }
 
     // Tạo check-in mới
     @PostMapping
-    public ResponseEntity<CheckInResponse> createCheckIn(
-            @RequestParam Long userId,
-            @RequestParam Long campaignId,
-            @RequestParam Integer points,
-            @RequestParam(defaultValue = "Verified") String verify
-    ) {
-        return ResponseEntity.ok(checkInService.createCheckIn(userId, campaignId, points, verify));
+    @PreAuthorize("hasRole('USER')")
+    public SimpleResponse createCheckIn(@RequestBody CheckinRequest request) {
+        try {
+            return checkInService.createCheckIn(
+                    request.getUserId(),
+                    request.getCampaignId(),
+                    request.getPoints(),
+                    request.getVerify()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 }

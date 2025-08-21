@@ -1,13 +1,13 @@
 package com.example.hunter_point.service;
 
 import com.example.hunter_point.dto.response.CheckInResponse;
-
-import java.util.List;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 
 public interface CheckInService {
-    List<CheckInResponse> getCheckInsByCampaign(Long campaignId);
+    ListResponse<CheckInResponse> getCheckInsByCampaign(Long campaignId, int page, int size);
 
-    List<CheckInResponse> getCheckInsByUser(Long userId);
+    ListResponse<CheckInResponse> getCheckInsByUser(Long userId, int page, int size);
 
-    CheckInResponse createCheckIn(Long userId, Long campaignId, Integer points, String verify);
+    SimpleResponse createCheckIn(Long userId, Long campaignId, Integer points, String verify);
 }

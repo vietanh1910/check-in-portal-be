@@ -21,6 +21,6 @@ public class CampaignRequest {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private CampaignStatus status;
-    private int page;
-    private int size;
+    private int page = 0;
+    private int size = 10;
 }

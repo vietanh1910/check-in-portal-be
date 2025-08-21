@@ -1,25 +1,15 @@
 package com.example.hunter_point.controller;
 
-
 import com.example.hunter_point.dto.request.CampaignRequest;
 import com.example.hunter_point.dto.response.CampaignResponse;
-import com.example.hunter_point.entity.enums.ERole;
-import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CampaignService;
 import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.GetDetailResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/campaigns")
@@ -63,32 +53,35 @@ public class CampaignController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ALLOCATOR', 'ADMIN')")
-    public ResponseEntity<CampaignResponse> updateCampaign(@PathVariable Long id, @RequestBody CampaignRequest requestDTO) {
-        checkOwnership(id);
-        CampaignResponse updatedCampaign = campaignService.updateCampaign(id, requestDTO);
-        return ResponseEntity.ok(updatedCampaign);
+    public SimpleResponse updateCampaign(@PathVariable Long id, @RequestBody CampaignRequest requestDTO) {
+        try {
+            return campaignService.updateCampaign(id, requestDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> deleteCampaign(@PathVariable Long id) {
-        checkOwnership(id);
+    public SimpleResponse deleteCampaign(@PathVariable Long id) {
         campaignService.deleteCampaign(id);
-        return ResponseEntity.noContent().build();
+        try {
+            return campaignService.deleteCampaign(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 
-    private void checkOwnership(Long campaignId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
-            return;
-        }
-
-        Long allocatorIdOfCampaign = campaignService.getAllocatorIdByCampaignId(campaignId);
-        if (!allocatorIdOfCampaign.equals(userDetails.getId())) {
-            throw new AccessDeniedException("You do not have permission to modify this campaign");
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/approve")
+    public SimpleResponse approveCampaign(@PathVariable Long id) {
+        try {
+            return campaignService.approveCampaign(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GenerateResponse.generateSuccessSimpleResponse();
         }
     }
 }

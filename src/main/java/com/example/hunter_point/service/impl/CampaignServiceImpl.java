@@ -1,10 +1,9 @@
 package com.example.hunter_point.service.impl;
 
-import com.example.hunter_point.dto.request.CampaignRequest;
-import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.dto.LocationDTO;
 import com.example.hunter_point.dto.WifiDTO;
-import com.example.hunter_point.dto.response.UserResponse;
+import com.example.hunter_point.dto.request.CampaignRequest;
+import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.entity.Campaign;
 import com.example.hunter_point.entity.User;
 import com.example.hunter_point.entity.enums.CampaignStatus;
@@ -26,11 +25,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CampaignServiceImpl implements CampaignService {
@@ -72,7 +70,7 @@ public class CampaignServiceImpl implements CampaignService {
                 .remainingBudget(requestDTO.getTotalBudget()) // Ban đầu bằng tổng budget
                 .startDate(requestDTO.getStartDate())
                 .endDate(requestDTO.getEndDate())
-                .status(requestDTO.getStatus() != null ? requestDTO.getStatus() : CampaignStatus.PENDING)
+                .status(CampaignStatus.PENDING)
                 .build();
 
         campaignRepository.save(campaign);
@@ -103,12 +101,12 @@ public class CampaignServiceImpl implements CampaignService {
         Page<Campaign> pageResult;
 
         if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(ERole.ADMIN.name()))) {
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ADMIN.name()))) {
             // ADMIN: Lấy tất cả
             pageResult = campaignRepository.findAll(pageable);
 
         } else if (authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(ERole.ALLOCATOR.name()))) {
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ALLOCATOR.name()))) {
             // ALLOCATOR: Lấy campaign do allocator này tạo
             pageResult = campaignRepository.findByAllocatorId(userDetails.getId(), pageable);
 
@@ -140,9 +138,21 @@ public class CampaignServiceImpl implements CampaignService {
     // --- UPDATE ---
     @Transactional
     @Override
-    public CampaignResponse updateCampaign(Long id, CampaignRequest requestDTO) {
-        Campaign campaign = campaignRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
+    public SimpleResponse updateCampaign(Long id, CampaignRequest requestDTO) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign ID cannot be null");
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findById(userDetails.getId());
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+
+        Optional<Campaign> campaignOptional = campaignRepository.findById(id);
+        if (campaignOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign not found with id: " + id);
+        }
+        Campaign campaign = campaignOptional.get();
 
         // Cập nhật các trường
         campaign.setName(requestDTO.getName());
@@ -150,19 +160,33 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setLocationName(requestDTO.getLocationName());
         campaign.setLatitude(requestDTO.getLatitude());
         campaign.setLongitude(requestDTO.getLongitude());
-        // ... cập nhật các trường khác tương tự
+        campaign.setRadiusMeters(requestDTO.getRadiusMeters());
 
-        Campaign updatedCampaign = campaignRepository.save(campaign);
-        return mapToResponseDTO(updatedCampaign);
+        campaignRepository.save(campaign);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
     // --- DELETE ---
     @Override
-    public void deleteCampaign(Long id) {
-        if (!campaignRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Campaign not found with id: " + id);
+    public SimpleResponse deleteCampaign(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign ID cannot be null");
         }
-        campaignRepository.deleteById(id);
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findById(userDetails.getId());
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+
+        Optional<Campaign> campaignOptional = campaignRepository.findById(id);
+        if (campaignOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign not found with id: " + id);
+        }
+        Campaign campaign = campaignOptional.get();
+        campaign.setStatus(CampaignStatus.CANCELLED);
+        campaign.setUpdatedAt(LocalDateTime.now());
+        campaignRepository.save(campaign);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
 
@@ -200,5 +224,27 @@ public class CampaignServiceImpl implements CampaignService {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id " + campaignId));
         return campaign.getAllocator().getId(); // giả sử Campaign có field allocator kiểu User
+    }
+
+    @Override
+    public SimpleResponse approveCampaign(Long id) {
+        if (id == null) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign ID cannot be null");
+        }
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findById(userDetails.getId());
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
+        Optional<Campaign> campaignOptional = campaignRepository.findById(id);
+        if (campaignOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("Campaign not found with id: " + id);
+        }
+        Campaign campaign = campaignOptional.get();
+        campaign.setStatus(CampaignStatus.APPROVED);
+        campaign.setApprovedAt(LocalDateTime.now());
+        campaign.setApprovedBy(userOptional.get());
+        campaignRepository.save(campaign);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 }

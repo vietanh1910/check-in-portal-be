@@ -1,5 +1,6 @@
 package com.example.hunter_point.service.impl;
 
+import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.dto.response.CheckInResponse;
 import com.example.hunter_point.entity.Campaign;
 import com.example.hunter_point.entity.CheckIn;
@@ -8,7 +9,13 @@ import com.example.hunter_point.repository.CampaignRepository;
 import com.example.hunter_point.repository.CheckInRepository;
 import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.service.CheckInService;
+import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,23 +30,39 @@ public class CheckInServiceImpl implements CheckInService {
     private final CampaignRepository campaignRepository;
 
     @Override
-    public List<CheckInResponse> getCheckInsByCampaign(Long campaignId) {
-        return checkInRepository.findByCampaignId(campaignId)
+    public ListResponse<CheckInResponse> getCheckInsByCampaign(Long campaignId, int page, int size) {
+        if (campaignId == null) {
+            return GenerateResponse.generateErrorListResponse("Campaign ID cannot be null");
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CheckIn> pageResult = checkInRepository.findByCampaignId(campaignId, pageable);
+        List<CheckInResponse> responseList = pageResult.getContent()
                 .stream()
                 .map(this::mapToDto)
-                .collect(Collectors.toList());
+                .toList();
+        return GenerateResponse.generateSuccessListResponse(
+                responseList,
+                pageResult.getTotalElements());
     }
 
     @Override
-    public List<CheckInResponse> getCheckInsByUser(Long userId) {
-        return checkInRepository.findByUserId(userId)
+    public ListResponse<CheckInResponse> getCheckInsByUser(Long userId, int page, int size) {
+        if (userId == null) {
+            return GenerateResponse.generateErrorListResponse("User ID cannot be null");
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CheckIn> pageResult = checkInRepository.findByUserId(userId, pageable);
+        List<CheckInResponse> responseList = pageResult.getContent()
                 .stream()
                 .map(this::mapToDto)
-                .collect(Collectors.toList());
+                .toList();
+        return GenerateResponse.generateSuccessListResponse(
+                responseList,
+                pageResult.getTotalElements());
     }
 
     @Override
-    public CheckInResponse createCheckIn(Long userId, Long campaignId, Integer points, String verify) {
+    public SimpleResponse createCheckIn(Long userId, Long campaignId, Integer points, String verify) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Campaign campaign = campaignRepository.findById(campaignId)
@@ -52,8 +75,8 @@ public class CheckInServiceImpl implements CheckInService {
                 .verify(verify)
                 .build();
 
-        CheckIn saved = checkInRepository.save(checkIn);
-        return mapToDto(saved);
+        checkInRepository.save(checkIn);
+        return GenerateResponse.generateSuccessSimpleResponse();
     }
 
     private CheckInResponse mapToDto(CheckIn checkIn) {
