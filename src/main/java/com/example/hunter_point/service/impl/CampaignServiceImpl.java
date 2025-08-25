@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,6 +129,7 @@ public class CampaignServiceImpl implements CampaignService {
         // map to response DTO
         List<CampaignResponse> responseList = pageResult.getContent()
                 .stream()
+                .sorted(Comparator.comparingInt(c -> c.getStatus().ordinal()))
                 .map(this::mapToResponseDTO)
                 .toList();
 
