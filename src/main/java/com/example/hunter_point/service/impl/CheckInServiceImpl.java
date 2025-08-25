@@ -17,7 +17,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,12 +65,38 @@ public class CheckInServiceImpl implements CheckInService {
     }
 
     @Override
+    @Transactional
     public SimpleResponse createCheckIn(Long userId, Long campaignId, Integer points, String verify) {
+        // Lấy user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Lấy campaign
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new RuntimeException("Campaign not found"));
 
+        LocalDateTime today = LocalDateTime.now();
+
+        // 1. Validate thời gian campaign
+        if (campaign.getStartDate() != null && today.isBefore(campaign.getStartDate())) {
+            throw new RuntimeException("Campaign has not started yet");
+        }
+        if (campaign.getEndDate() != null && today.isAfter(campaign.getEndDate())) {
+            throw new RuntimeException("Campaign has expired");
+        }
+
+        // 2. Validate số lượt check-in
+        if (campaign.getMaxCheckinsPerUser() == 0) {
+            throw new RuntimeException("Campaign check-in limit reached");
+        }
+
+        // 3. Update campaign (tăng lượt đã dùng)
+        campaign.setCheckIns(campaign.getCheckIns() + 1);
+
+        // 4. Update user (cộng điểm)
+        user.setPoints(user.getPoints() + points);
+
+        // 5. Tạo check-in record
         CheckIn checkIn = CheckIn.builder()
                 .user(user)
                 .campaign(campaign)
@@ -76,8 +105,12 @@ public class CheckInServiceImpl implements CheckInService {
                 .build();
 
         checkInRepository.save(checkIn);
+        userRepository.save(user);
+        campaignRepository.save(campaign);
+
         return GenerateResponse.generateSuccessSimpleResponse();
     }
+
 
     private CheckInResponse mapToDto(CheckIn checkIn) {
         return CheckInResponse.builder()

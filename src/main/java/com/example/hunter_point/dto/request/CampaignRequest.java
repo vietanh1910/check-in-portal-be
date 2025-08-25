@@ -15,6 +15,7 @@ public class CampaignRequest {
     private BigDecimal longitude;
     private Integer radiusMeters;
     private String requiredWifiSsid;
+    private String requiredWifiBssid;
     private Integer pointsPerCheckin;
     private Integer maxCheckinsPerUser;
     private BigDecimal totalBudget;

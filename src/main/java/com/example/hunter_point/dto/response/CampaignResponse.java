@@ -19,6 +19,7 @@ public class CampaignResponse {
     private String endDate;   // FE cần string
     private String startTime; // FE cần string
     private String endTime;   // FE cần string
+    private String locationName;   // FE cần string
     private LocationDTO location;
     private Integer rewardPerCheckin;
     private BigDecimal pointBudget;
@@ -29,4 +30,5 @@ public class CampaignResponse {
     private CampaignStatus status;
     private String createdAt; // FE cần string
     private String updatedAt; // FE cần string
+    private Integer radiusMeters;
 }

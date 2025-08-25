@@ -2,6 +2,9 @@ package com.example.hunter_point.controller;
 
 import com.example.hunter_point.dto.request.CheckinRequest;
 import com.example.hunter_point.dto.response.CheckInResponse;
+import com.example.hunter_point.entity.User;
+import com.example.hunter_point.repository.UserRepository;
+import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CheckInService;
 import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
@@ -9,7 +12,10 @@ import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/check-ins")
@@ -17,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class CheckInController {
 
     private final CheckInService checkInService;
+
+    private final UserRepository userRepository;
 
     // Lấy tất cả check-in theo campaign
     @GetMapping("/campaign/{campaignId}")
@@ -54,9 +62,14 @@ public class CheckInController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public SimpleResponse createCheckIn(@RequestBody CheckinRequest request) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findById(userDetails.getId());
+        if (userOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("User not found");
+        }
         try {
             return checkInService.createCheckIn(
-                    request.getUserId(),
+                    userOptional.get().getId(),
                     request.getCampaignId(),
                     request.getPoints(),
                     request.getVerify()

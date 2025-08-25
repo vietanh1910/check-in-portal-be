@@ -29,9 +29,9 @@ public class CampaignController {
         }
     }
 
-    @GetMapping
+    @PostMapping("/get-all")
     @PreAuthorize("isAuthenticated()")
-    public ListResponse<CampaignResponse> getAllCampaigns(CampaignRequest requestDTO) {
+    public ListResponse<CampaignResponse> getAllCampaigns(@RequestBody CampaignRequest requestDTO) {
         try {
             return campaignService.getAllCampaigns(requestDTO);
         } catch (Exception e) {

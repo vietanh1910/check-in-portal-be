@@ -34,7 +34,6 @@ public class UserController {
     }
 
     // Get user detail
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public GetDetailResponse<UserResponse> getUser(@PathVariable Long id) {
         try {
@@ -46,7 +45,6 @@ public class UserController {
     }
 
     // Update user
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public SimpleResponse updateUser(@PathVariable Long id, @RequestBody UserResponse updateDto) {
         try {

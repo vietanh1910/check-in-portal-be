@@ -20,16 +20,35 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     Page<Campaign> findByAllocatorId(Long userId, Pageable pageable);
 
     @Query(value = """
-            SELECT c.*,
-                   (6371 * acos(cos(radians(:lat)) * cos(radians(c.latitude)) *
-                   cos(radians(c.longitude) - radians(:lon)) + 
-                   sin(radians(:lat)) * sin(radians(c.latitude)))) AS distance
-            FROM campaigns c
-            ORDER BY distance DESC
-            """,
-            countQuery = "SELECT count(*) FROM campaigns",
+        SELECT c.*,
+               (6371 * acos(
+                   cos(radians(:lat)) * cos(radians(c.latitude)) *
+                   cos(radians(c.longitude) - radians(:lon)) +
+                   sin(radians(:lat)) * sin(radians(c.latitude))
+               )) AS distance
+        FROM campaigns c
+        WHERE NOT EXISTS (
+            SELECT 1 FROM check_ins ch
+            WHERE ch.campaign_id = c.id
+              AND ch.user_id = :userId
+        )
+        ORDER BY distance DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM campaigns c
+        WHERE NOT EXISTS (
+            SELECT 1 FROM check_ins ch
+            WHERE ch.campaign_id = c.id
+              AND ch.user_id = :userId
+        )
+        """,
             nativeQuery = true)
-    Page<Campaign> findByDistanceDesc(@Param("lat") BigDecimal lat,
-                                      @Param("lon") BigDecimal lon,
-                                      Pageable pageable);
+    Page<Campaign> findCampaignsNotCheckedInByUser(
+            @Param("lat") BigDecimal lat,
+            @Param("lon") BigDecimal lon,
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
 }

@@ -59,4 +59,5 @@ public class User {
     private String permissions; // Lưu dưới dạng chuỗi JSON
 
     private LocalDateTime lastLogin;
+    private Integer points; // Tổng điểm của người dùng
 }

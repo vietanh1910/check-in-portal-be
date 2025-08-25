@@ -71,6 +71,8 @@ public class CampaignServiceImpl implements CampaignService {
                 .startDate(requestDTO.getStartDate())
                 .endDate(requestDTO.getEndDate())
                 .status(CampaignStatus.PENDING)
+                .checkIns(0)
+                .used(0)
                 .build();
 
         campaignRepository.save(campaign);
@@ -120,7 +122,7 @@ public class CampaignServiceImpl implements CampaignService {
             }
 
             // repository query native SQL để sort theo khoảng cách
-            pageResult = campaignRepository.findByDistanceDesc(lat, lon, pageable);
+            pageResult = campaignRepository.findCampaignsNotCheckedInByUser(lat, lon, userDetails.getId(), pageable);
         }
 
         // map to response DTO
@@ -205,16 +207,18 @@ public class CampaignServiceImpl implements CampaignService {
                 .endDate(campaign.getEndDate().format(DATE_FORMATTER))
                 .startTime(campaign.getStartDate().format(TIME_FORMATTER))
                 .endTime(campaign.getEndDate().format(TIME_FORMATTER))
+                .locationName(campaign.getLocationName())
                 .location(new LocationDTO(campaign.getLatitude(), campaign.getLongitude()))
                 .rewardPerCheckin(campaign.getPointsPerCheckin())
                 .pointBudget(campaign.getTotalBudget())
-                .wifi(new WifiDTO(campaign.getRequiredWifiSsid(), "")) // BSSID không có trong DB
+                .wifi(new WifiDTO(campaign.getRequiredWifiSsid(), campaign.getRequiredWifiBssid()))
                 .qrUrl(qrUrl)
                 .used(used)
                 .checkIns(checkIns)
                 .status(campaign.getStatus())
                 .createdAt(campaign.getCreatedAt().format(DATETIME_FORMATTER))
                 .updatedAt(campaign.getUpdatedAt().format(DATETIME_FORMATTER))
+                .radiusMeters(campaign.getRadiusMeters())
                 .build();
     }
 
