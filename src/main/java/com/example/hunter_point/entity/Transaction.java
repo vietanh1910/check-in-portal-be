@@ -5,7 +5,7 @@ import com.example.hunter_point.entity.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions")
@@ -27,7 +27,7 @@ public class Transaction {
     private Double amount;
     private String description;
 
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     private Long userId;
 

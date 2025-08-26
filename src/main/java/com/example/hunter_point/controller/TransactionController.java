@@ -1,9 +1,11 @@
 package com.example.hunter_point.controller;
 
+import com.example.hunter_point.dto.request.TransactionRequest;
 import com.example.hunter_point.dto.response.TransactionResponse;
 import com.example.hunter_point.service.TransactionService;
 import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
+import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,5 +27,12 @@ public class TransactionController {
             return GenerateResponse.generateErrorListResponse("BAD_REQUEST");
         }
     }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ROLE_ALLOCATOR')")
+    public SimpleResponse createTransaction(@RequestBody TransactionRequest request) {
+        return transactionService.createTransaction(request);
+    }
+
 }
 
