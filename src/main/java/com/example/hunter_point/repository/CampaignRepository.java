@@ -27,21 +27,23 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
                    sin(radians(:lat)) * sin(radians(c.latitude))
                )) AS distance
         FROM campaigns c
-        WHERE NOT EXISTS (
-            SELECT 1 FROM check_ins ch
-            WHERE ch.campaign_id = c.id
-              AND ch.user_id = :userId
-        )
+        WHERE c.status = 'APPROVED'
+          AND NOT EXISTS (
+              SELECT 1 FROM check_ins ch
+              WHERE ch.campaign_id = c.id
+                AND ch.user_id = :userId
+          )
         ORDER BY distance DESC
         """,
             countQuery = """
         SELECT COUNT(*)
         FROM campaigns c
-        WHERE NOT EXISTS (
-            SELECT 1 FROM check_ins ch
-            WHERE ch.campaign_id = c.id
-              AND ch.user_id = :userId
-        )
+        WHERE c.status = 'APPROVED'
+          AND NOT EXISTS (
+              SELECT 1 FROM check_ins ch
+              WHERE ch.campaign_id = c.id
+                AND ch.user_id = :userId
+          )
         """,
             nativeQuery = true)
     Page<Campaign> findCampaignsNotCheckedInByUser(
@@ -50,5 +52,6 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
             @Param("userId") Long userId,
             Pageable pageable
     );
+
 
 }

@@ -1,0 +1,11 @@
+package com.example.hunter_point.repository;
+
+import com.example.hunter_point.entity.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    Page<Transaction> findByUserId(Long userId, Pageable pageable);
+}
+

@@ -10,7 +10,6 @@ import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
