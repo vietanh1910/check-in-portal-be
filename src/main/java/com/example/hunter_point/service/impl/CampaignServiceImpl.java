@@ -65,6 +65,7 @@ public class CampaignServiceImpl implements CampaignService {
                 .longitude(requestDTO.getLongitude())
                 .radiusMeters(requestDTO.getRadiusMeters() != null ? requestDTO.getRadiusMeters() : 50)
                 .requiredWifiSsid(requestDTO.getRequiredWifiSsid())
+                .requiredWifiBssid(requestDTO.getRequiredWifiBssid())
                 .pointsPerCheckin(requestDTO.getPointsPerCheckin())
                 .maxCheckinsPerUser(requestDTO.getMaxCheckinsPerUser() != null ? requestDTO.getMaxCheckinsPerUser() : 1)
                 .totalBudget(requestDTO.getTotalBudget())
@@ -165,6 +166,14 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setLatitude(requestDTO.getLatitude());
         campaign.setLongitude(requestDTO.getLongitude());
         campaign.setRadiusMeters(requestDTO.getRadiusMeters());
+
+        campaign.setRequiredWifiSsid(requestDTO.getRequiredWifiSsid());
+        campaign.setRequiredWifiBssid(requestDTO.getRequiredWifiBssid());
+        campaign.setPointsPerCheckin(requestDTO.getPointsPerCheckin());
+        campaign.setMaxCheckinsPerUser(requestDTO.getMaxCheckinsPerUser());
+        campaign.setTotalBudget(requestDTO.getTotalBudget());
+        campaign.setStartDate(requestDTO.getStartDate());
+        campaign.setEndDate(requestDTO.getEndDate());
 
         campaignRepository.save(campaign);
         return GenerateResponse.generateSuccessSimpleResponse();
