@@ -9,4 +9,6 @@ public interface TransactionService {
     ListResponse<TransactionResponse> getTransactionsByUser(int page, int size);
 
     SimpleResponse createTransaction(TransactionRequest request);
+
+    SimpleResponse approveTransaction(Long transactionId);
 }

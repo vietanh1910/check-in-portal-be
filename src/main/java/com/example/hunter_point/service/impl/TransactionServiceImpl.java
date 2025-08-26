@@ -5,6 +5,7 @@ import com.example.hunter_point.dto.response.TransactionResponse;
 import com.example.hunter_point.entity.Transaction;
 import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.entity.enums.TransactionStatus;
+import com.example.hunter_point.entity.enums.TransactionType;
 import com.example.hunter_point.repository.TransactionRepository;
 import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.TransactionService;
@@ -12,6 +13,7 @@ import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +81,31 @@ public class TransactionServiceImpl implements TransactionService {
                 + " (point: " + saved.getPoint() + ")";
         telegramService.sendMessage(message);
 
+        return GenerateResponse.generateSuccessSimpleResponse();
+    }
+
+    @Override
+    public SimpleResponse approveTransaction(Long transactionId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Optional<Transaction> transactionOpt = transactionRepository.findById(transactionId);
+        if (transactionOpt.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("Transaction not found");
+        }
+
+        Transaction transaction = transactionOpt.get();
+
+        if (transaction.getStatus() != TransactionStatus.PENDING) {
+            return GenerateResponse.generateErrorSimpleResponse("Transaction already processed");
+        }
+        if (transaction.getType() == TransactionType.SPENT) {
+            transaction.setStatus(TransactionStatus.WITHDRAWN);
+        } else {
+            transaction.setStatus(TransactionStatus.COMPLETED);
+        }
+        transaction.setApprovedAt(LocalDateTime.now());
+        transaction.setApprovedBy(userDetails.getId());
+        transactionRepository.save(transaction);
         return GenerateResponse.generateSuccessSimpleResponse();
     }
 

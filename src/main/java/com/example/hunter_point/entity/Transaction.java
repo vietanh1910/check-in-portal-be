@@ -28,7 +28,8 @@ public class Transaction {
     private String description;
 
     private LocalDateTime createdAt;
-
+    private LocalDateTime approvedAt;
+    private Long approvedBy;
     private Long userId;
 
     @Enumerated(EnumType.STRING)

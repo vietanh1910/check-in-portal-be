@@ -17,7 +17,7 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @GetMapping
+    @GetMapping("/get-all")
     @PreAuthorize("hasRole('ALLOCATOR')")
     public ListResponse<TransactionResponse> getTransactions(@RequestParam int page, @RequestParam int size) {
         try {
@@ -28,10 +28,26 @@ public class TransactionController {
         }
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('ROLE_ALLOCATOR')")
+    @PostMapping("/create")
+    @PreAuthorize("hasRole('ALLOCATOR')")
     public SimpleResponse createTransaction(@RequestBody TransactionRequest request) {
-        return transactionService.createTransaction(request);
+        try {
+            return transactionService.createTransaction(request);
+        } catch (Exception e){
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
+    }
+
+    @PostMapping("/{transactionId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public SimpleResponse approveTransaction(@PathVariable Long transactionId) {
+        try {
+            return transactionService.approveTransaction(transactionId);
+        } catch (Exception e){
+            e.printStackTrace();
+            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+        }
     }
 
 }
