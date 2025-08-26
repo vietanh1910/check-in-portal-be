@@ -1,5 +1,6 @@
 package com.example.hunter_point.service.impl;
 
+import com.example.hunter_point.config.RabbitMQConfig;
 import com.example.hunter_point.dto.request.TransactionRequest;
 import com.example.hunter_point.dto.response.TransactionResponse;
 import com.example.hunter_point.entity.Transaction;
@@ -12,6 +13,7 @@ import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +29,7 @@ import java.util.List;
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final TelegramService telegramService;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public ListResponse<TransactionResponse> getTransactionsByUser(int page, int size) {
@@ -76,7 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
                 + " đã " + saved.getType().name().toLowerCase()
                 + " số tiền: " + saved.getAmount()
                 + " (point: " + saved.getPoint() + ")";
-        telegramService.sendMessage(message);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.TRANSACTION_QUEUE, message);
 
         return GenerateResponse.generateSuccessSimpleResponse();
     }
