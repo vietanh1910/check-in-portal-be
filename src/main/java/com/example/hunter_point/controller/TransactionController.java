@@ -18,7 +18,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping("/get-all")
-    @PreAuthorize("hasRole('ALLOCATOR')")
+    @PreAuthorize("hasAnyRole('ALLOCATOR', 'ADMIN')")
     public ListResponse<TransactionResponse> getTransactions(@RequestParam int page, @RequestParam int size) {
         try {
             return transactionService.getTransactionsByUser(page, size);
