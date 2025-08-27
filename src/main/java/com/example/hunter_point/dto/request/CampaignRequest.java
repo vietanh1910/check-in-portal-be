@@ -18,7 +18,7 @@ public class CampaignRequest {
     private String requiredWifiBssid;
     private Integer pointsPerCheckin;
     private Integer maxCheckinsPerUser;
-    private BigDecimal totalBudget;
+    private Integer totalBudget;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private CampaignStatus status;

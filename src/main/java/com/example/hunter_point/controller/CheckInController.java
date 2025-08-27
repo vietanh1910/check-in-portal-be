@@ -27,11 +27,11 @@ public class CheckInController {
 
     // Lấy tất cả check-in theo campaign
     @GetMapping("/campaign/{campaignId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ListResponse<CheckInResponse> getByCampaign(
             @PathVariable Long campaignId,
-            @PathVariable int page,
-            @PathVariable int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
             ) {
         try {
             return checkInService.getCheckInsByCampaign(campaignId, page, size);
@@ -43,11 +43,11 @@ public class CheckInController {
 
     // Lấy tất cả check-in theo user
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ListResponse<CheckInResponse> getByUser(
             @PathVariable Long userId,
-            @PathVariable int page,
-            @PathVariable int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         try {
             return checkInService.getCheckInsByUser(userId, page, size);
@@ -59,7 +59,7 @@ public class CheckInController {
 
     // Tạo check-in mới
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public SimpleResponse createCheckIn(@RequestBody CheckinRequest request) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<User> userOptional = userRepository.findById(userDetails.getId());

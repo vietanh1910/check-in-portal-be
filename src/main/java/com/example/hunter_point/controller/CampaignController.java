@@ -19,7 +19,7 @@ public class CampaignController {
     private final CampaignService campaignService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ALLOCATOR')")
+    @PreAuthorize("hasRole('ROLE_ALLOCATOR')")
     public SimpleResponse createCampaign(@RequestBody CampaignRequest requestDTO) {
         try {
             return campaignService.createCampaign(requestDTO);

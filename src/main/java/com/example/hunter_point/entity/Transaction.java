@@ -31,6 +31,7 @@ public class Transaction {
     private LocalDateTime approvedAt;
     private Long approvedBy;
     private Long userId;
+    private Long campaignId;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;

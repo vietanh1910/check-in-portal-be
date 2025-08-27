@@ -54,11 +54,11 @@ public class Campaign {
 
     private Integer maxCheckinsPerUser;
 
-    @Column(precision = 15, scale = 2, nullable = false)
-    private BigDecimal totalBudget; // map sang pointBudget
+    @Column(nullable = false)
+    private Integer totalBudget; // map sang pointBudget
 
-    @Column(precision = 15, scale = 2, nullable = false)
-    private BigDecimal remainingBudget;
+    @Column(nullable = false)
+    private Integer remainingBudget;
 
     // thời gian
     @Column(nullable = false)

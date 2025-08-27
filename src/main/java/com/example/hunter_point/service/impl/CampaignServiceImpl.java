@@ -5,11 +5,15 @@ import com.example.hunter_point.dto.WifiDTO;
 import com.example.hunter_point.dto.request.CampaignRequest;
 import com.example.hunter_point.dto.response.CampaignResponse;
 import com.example.hunter_point.entity.Campaign;
+import com.example.hunter_point.entity.Transaction;
 import com.example.hunter_point.entity.User;
 import com.example.hunter_point.entity.enums.CampaignStatus;
 import com.example.hunter_point.entity.enums.ERole;
+import com.example.hunter_point.entity.enums.TransactionStatus;
+import com.example.hunter_point.entity.enums.TransactionType;
 import com.example.hunter_point.exception.ResourceNotFoundException;
 import com.example.hunter_point.repository.CampaignRepository;
+import com.example.hunter_point.repository.TransactionRepository;
 import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.CampaignService;
@@ -17,6 +21,7 @@ import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.GetDetailResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,15 +41,17 @@ public class CampaignServiceImpl implements CampaignService {
 
     private final CampaignRepository campaignRepository;
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
 
-    public CampaignServiceImpl(CampaignRepository campaignRepository, UserRepository userRepository) {
+    public CampaignServiceImpl(CampaignRepository campaignRepository, UserRepository userRepository, TransactionRepository transactionRepository) {
         this.campaignRepository = campaignRepository;
         this.userRepository = userRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     // --- CREATE ---
@@ -77,7 +84,17 @@ public class CampaignServiceImpl implements CampaignService {
                 .used(0)
                 .build();
 
-        campaignRepository.save(campaign);
+        campaign = campaignRepository.save(campaign);
+        Transaction transaction = Transaction.builder()
+                .type(TransactionType.SPENT)
+                .point(requestDTO.getTotalBudget())
+                .amount(requestDTO.getTotalBudget() / 100.0)
+                .description(requestDTO.getName())
+                .createdAt(LocalDateTime.now())
+                .userId(userOptional.get().getId())
+                .campaignId(campaign.getId())
+                .build();
+        transactionRepository.save(transaction);
         return GenerateResponse.generateSuccessSimpleResponse();
     }
 
@@ -176,6 +193,25 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setEndDate(requestDTO.getEndDate());
 
         campaignRepository.save(campaign);
+        Optional<Transaction> transactionOptional = transactionRepository.findByCampaignId(id);
+        if (transactionOptional.isEmpty()) {
+            Transaction transaction = Transaction.builder()
+                    .type(TransactionType.SPENT)
+                    .point(requestDTO.getTotalBudget())
+                    .amount(requestDTO.getTotalBudget() / 100.0)
+                    .description(requestDTO.getName())
+                    .createdAt(LocalDateTime.now())
+                    .userId(userOptional.get().getId())
+                    .campaignId(id)
+                    .build();
+            transactionRepository.save(transaction);
+        } else {
+            Transaction transaction = transactionOptional.get();
+            transaction.setPoint(requestDTO.getTotalBudget());
+            transaction.setAmount(requestDTO.getTotalBudget() / 100.0);
+            transaction.setDescription(requestDTO.getDescription());
+            transactionRepository.save(transaction);
+        }
         return GenerateResponse.generateSuccessSimpleResponse();
     }
 
@@ -260,6 +296,16 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setApprovedAt(LocalDateTime.now());
         campaign.setApprovedBy(userOptional.get());
         campaignRepository.save(campaign);
+        Optional<Transaction> transactionOptional = transactionRepository.findByCampaignId(id);
+        if (transactionOptional.isEmpty()) {
+            return GenerateResponse.generateErrorSimpleResponse("Transaction not found");
+        } else {
+            Transaction transaction = transactionOptional.get();
+            transaction.setApprovedAt(LocalDateTime.now());
+            transaction.setStatus(TransactionStatus.WITHDRAWN);
+            transaction.setApprovedBy(userOptional.get().getId());
+            transactionRepository.save(transaction);
+        }
         return GenerateResponse.generateSuccessSimpleResponse();
     }
 }

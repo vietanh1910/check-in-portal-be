@@ -52,6 +52,7 @@ public class DataSeeder implements CommandLineRunner {
                     .role(ERole.USER)
                     .status(UserStatus.ACTIVE)
                     .emailVerified(true)
+                    .points(100)
                     .build();
 
             userRepository.save(admin);
@@ -64,6 +65,7 @@ public class DataSeeder implements CommandLineRunner {
                     .role(ERole.ALLOCATOR)
                     .status(UserStatus.ACTIVE)
                     .emailVerified(true)
+                    .points(5000)
                     .build();
 
             userRepository.save(admin);

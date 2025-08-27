@@ -22,7 +22,7 @@ public class CampaignResponse {
     private String locationName;   // FE cần string
     private LocationDTO location;
     private Integer rewardPerCheckin;
-    private BigDecimal pointBudget;
+    private Integer pointBudget;
     private WifiDTO wifi;
     private String qrUrl; // Sẽ sinh ra sau
     private long used; // Cần tính toán
