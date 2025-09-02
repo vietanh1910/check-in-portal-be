@@ -3,17 +3,19 @@ package com.example.hunter_point.service.impl;
 import com.example.hunter_point.dto.request.TransactionRequest;
 import com.example.hunter_point.dto.response.TransactionResponse;
 import com.example.hunter_point.entity.Transaction;
+import com.example.hunter_point.entity.User;
 import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.entity.enums.TransactionStatus;
 import com.example.hunter_point.entity.enums.TransactionType;
 import com.example.hunter_point.repository.TransactionRepository;
+import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.security.UserDetailsImpl;
 import com.example.hunter_point.service.TransactionService;
 import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.GetDetailResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final TelegramService telegramService;
+    private final UserRepository userRepository;
 
     @Override
     public ListResponse<TransactionResponse> getTransactionsByUser(int page, int size) {
@@ -61,7 +64,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public SimpleResponse createTransaction(TransactionRequest request) {
+    public GetDetailResponse<TransactionResponse> createTransaction(TransactionRequest request) {
         Transaction transaction = Transaction.builder()
                 .type(request.getType())
                 .point(request.getPoint())
@@ -70,18 +73,23 @@ public class TransactionServiceImpl implements TransactionService {
                 .createdAt(LocalDateTime.now())
                 .userId(request.getUserId())
                 .status(TransactionStatus.PENDING)
+                .codeTransaction("TXN" + System.currentTimeMillis() + (int)(Math.random() * 1000))
                 .build();
 
         Transaction saved = transactionRepository.save(transaction);
-
+        User user = userRepository.findById(saved.getUserId()).orElse(null);
+        if (user == null) {
+            return GenerateResponse.generateErrorGetDetailResponse("User not found");
+        }
         // Gửi message vào RabbitMQ
-        String message = "Tài khoản ID " + saved.getUserId()
-                + " đã " + saved.getType().name().toLowerCase()
-                + " số tiền: " + saved.getAmount()
-                + " (point: " + saved.getPoint() + ")";
+        String message = "Tài khoản Email " + user.getEmail()
+                + " đã " + saved.getType()
+                + " số tiền: " + saved.getAmount() + " tương đương "
+                + saved.getPoint() + " point. Vui lòng kiểm tra tài khoản. " +
+                "Mã giao dịch: " + saved.getCodeTransaction();
         telegramService.sendMessage(message);
 
-        return GenerateResponse.generateSuccessSimpleResponse();
+        return GenerateResponse.generateSuccessGetDetailResponse(mapToResponse(saved));
     }
 
     @Override

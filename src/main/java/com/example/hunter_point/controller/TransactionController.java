@@ -4,6 +4,7 @@ import com.example.hunter_point.dto.request.TransactionRequest;
 import com.example.hunter_point.dto.response.TransactionResponse;
 import com.example.hunter_point.service.TransactionService;
 import com.example.hunter_point.utils.response.GenerateResponse;
+import com.example.hunter_point.utils.response.GetDetailResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +31,12 @@ public class TransactionController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ALLOCATOR')")
-    public SimpleResponse createTransaction(@RequestBody TransactionRequest request) {
+    public GetDetailResponse<TransactionResponse> createTransaction(@RequestBody TransactionRequest request) {
         try {
             return transactionService.createTransaction(request);
         } catch (Exception e){
             e.printStackTrace();
-            return GenerateResponse.generateErrorSimpleResponse("BAD_REQUEST");
+            return GenerateResponse.generateErrorGetDetailResponse("BAD_REQUEST");
         }
     }
 
