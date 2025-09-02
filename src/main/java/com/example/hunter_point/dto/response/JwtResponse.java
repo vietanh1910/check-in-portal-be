@@ -10,13 +10,15 @@ public class JwtResponse {
     private String token;
     private String type = "Bearer";
     private Long id;
-    private String username;
+    private String username; // email
     private List<String> roles;
+    private Integer points; //
 
-    public JwtResponse(String accessToken, Long id, String username, List<String> roles) {
+    public JwtResponse(String accessToken, Long id, String username, List<String> roles, Integer points) {
         this.token = accessToken;
         this.id = id;
         this.username = username;
         this.roles = roles;
-    }
+        this.points = points;
+}
 }

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực Voucher</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        p {
+            line-height: 1.6;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-confirm {
+            background-color: #28a745;
+        }
+        .btn-confirm:hover {
+            background-color: #1e7e34;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+            border-left-width: 5px;
+            border-left-style: solid;
+        }
+        .success {
+            background-color: #e9f7ef;
+            color: #155724;
+            border-color: #28a745;
+        }
+        .error {
+            background-color: #fbe9e7;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+        #result h3 {
+            margin-top: 0;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Trang Xác thực Voucher</h1>
+    <p>Quét mã QR của khách hàng để tự động điền mã, hoặc nhập thủ công vào ô dưới đây.</p>
+
+    <input type="text" id="qrCodeInput" placeholder="Mã QR code...">
+    <button class="btn-primary" onclick="validateCode()">Kiểm tra Voucher</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`;
+    const qrInput = document.getElementById('qrCodeInput');
+    const resultDiv = document.getElementById('result');
+    let currentValidCode = '';
+
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get('code');
+
+        if (codeFromUrl) {
+            qrInput.value = codeFromUrl;
+            validateCode();
+        }
+    };
+
+    async function validateCode() {
+        const code = qrInput.value.trim();
+        if (!code) {
+            alert('Vui lòng nhập mã code.');
+            return;
+        }
+
+        resultDiv.style.display = 'none';
+        resultDiv.innerHTML = '';
+        currentValidCode = '';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/voucher-qr/validate/${code}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || `Lỗi ${response.status}`);
+                } catch (e) {
+                    throw new Error(errorText || `Lỗi ${response.status}`);
+                }
+            }
+
+            const data = await response.json();
+            displayResult(data, code);
+
+        } catch (error) {
+            displayError(error.message);
+        }
+    }
+
+    function displayResult(data, code) {
+        resultDiv.style.display = 'block';
+
+        if (data.status === 'ACTIVE') {
+            resultDiv.className = 'success';
+            const expiryDate = new Date(data.expiryDate).toLocaleString('vi-VN');
+            resultDiv.innerHTML = `
+                    <h3>Voucher Hợp Lệ!</h3>
+                    <p><strong>Mã:</strong> ${code}</p>
+                    <p><strong>Trạng thái:</strong> ${data.status}</p>
+                    <p><strong>Hết hạn lúc:</strong> ${expiryDate}</p>
+                    <hr>
+                    <button class="btn-confirm" onclick="confirmUsage()">Xác nhận sử dụng Voucher này</button>
+                `;
+            currentValidCode = code;
+        } else {
+            resultDiv.className = 'error';
+            resultDiv.innerHTML = `
+                    <h3>Voucher KHÔNG Hợp Lệ!</h3>
+                    <p><strong>Mã:</strong> ${code}</p>
+                    <p><strong>Trạng thái:</strong> ${data.status}</p>
+                    <p><strong>Lý do:</strong> ${data.status === 'USED' ? 'Voucher đã được sử dụng.' : 'Voucher đã hết hạn hoặc không tồn tại.'}</p>
+                `;
+        }
+    }
+
+    function displayError(message) {
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `<h3>Đã xảy ra lỗi</h3><p>${message}</p>`;
+    }
+
+    async function confirmUsage() {
+        if (!currentValidCode) return;
+
+        if (!confirm('Bạn có chắc chắn muốn áp dụng voucher này cho khách hàng không? Hành động này không thể hoàn tác.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/voucher-qr/confirm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: currentValidCode, agree: true })
+            });
+
+            if (response.ok) {
+                alert('Đã xác nhận sử dụng voucher thành công!');
+                qrInput.value = '';
+                resultDiv.style.display = 'none';
+                resultDiv.innerHTML = '';
+            } else {
+                throw new Error('Lỗi khi xác nhận voucher. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        }
+    }
+</script>
+
+</body>
+</html>
