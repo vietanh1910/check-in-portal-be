@@ -12,5 +12,7 @@ public interface VoucherService {
     VoucherResponse create(VoucherRequest request);
     VoucherResponse update(Long id, VoucherRequest request);
     void delete(Long id);
+    List<VoucherResponse> getAvailableVouchersForUser(Long userId);
+    boolean redeem(Long voucherId, Long currentUserId);
 }
 

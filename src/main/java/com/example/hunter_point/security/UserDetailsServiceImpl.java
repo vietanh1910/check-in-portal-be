@@ -16,8 +16,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-
-    // Spring Security sẽ gọi phương thức này với username (trong trường hợp của chúng ta là email)
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

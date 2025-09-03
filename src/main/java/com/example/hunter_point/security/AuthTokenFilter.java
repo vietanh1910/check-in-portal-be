@@ -18,6 +18,8 @@ import java.io.IOException;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
+
+    // Giữ nguyên các dependency và constructor
     private final JwtUtils jwtUtils;
     private final UserDetailsServiceImpl userDetailsService;
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
@@ -26,39 +28,44 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
     }
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String path = request.getServletPath();
-
-            if (path.startsWith("/api/auth")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
+            // Cố gắng đọc token từ header
             String jwt = parseJwt(request);
+
+            // Nếu có token và token hợp lệ
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+                // Lấy email từ token
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
+
+                // Tải thông tin user từ DB
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                // Tạo một đối tượng Authentication và đặt nó vào Security Context
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e.getMessage());
+            logger.error("Không thể xác thực người dùng: {}", e.getMessage());
         }
+
+        // Luôn luôn gọi filter tiếp theo trong chuỗi, dù có xác thực được hay không.
+        // Spring Security sẽ tự quyết định ở bước sau.
         filterChain.doFilter(request, response);
     }
 
-
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
+
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }
+
         return null;
     }
 }

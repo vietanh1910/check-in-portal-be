@@ -21,7 +21,6 @@ import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.GetDetailResponse;
 import com.example.hunter_point.utils.response.ListResponse;
 import com.example.hunter_point.utils.response.SimpleResponse;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
