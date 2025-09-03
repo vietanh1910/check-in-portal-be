@@ -31,4 +31,5 @@ public class CampaignResponse {
     private String createdAt; // FE cần string
     private String updatedAt; // FE cần string
     private Integer radiusMeters;
+    private String address;
 }

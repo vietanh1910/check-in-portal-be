@@ -97,5 +97,8 @@ public class Campaign {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
 }
 
