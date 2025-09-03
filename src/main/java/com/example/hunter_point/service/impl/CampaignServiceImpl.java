@@ -94,6 +94,9 @@ public class CampaignServiceImpl implements CampaignService {
                 .userId(userOptional.get().getId())
                 .campaignId(campaign.getId())
                 .build();
+        User allocator = userOptional.get();
+        allocator.setPoints(allocator.getPoints() - requestDTO.getTotalBudget());
+        userRepository.save(allocator);
         transactionRepository.save(transaction);
         return GenerateResponse.generateSuccessSimpleResponse();
     }
