@@ -44,11 +44,11 @@ public class TransactionServiceImpl implements TransactionService {
         Page<Transaction> pageResult;
         if (authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ADMIN.name()))) {
-            pageResult = transactionRepository.findAll(pageable);
+            pageResult = transactionRepository.findAllByOrderByCreatedAtDesc(pageable);
 
         } else if (authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ALLOCATOR.name()))) {
-            pageResult = transactionRepository.findByUserId(userDetails.getId(), pageable);
+            pageResult = transactionRepository.findByUserIdOrderByCreatedAtDesc(userDetails.getId(), pageable);
 
         } else {
             return GenerateResponse.generateErrorListResponse("You don't have permission");
@@ -127,6 +127,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .createdAt(transaction.getCreatedAt())
                 .userId(transaction.getUserId())
                 .status(transaction.getStatus())
+                .codeTransaction(transaction.getCodeTransaction())
                 .build();
     }
 }
