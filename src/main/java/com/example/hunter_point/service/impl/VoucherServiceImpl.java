@@ -143,6 +143,7 @@ public class VoucherServiceImpl implements VoucherService {
         voucher.setEndDate(request.getEndDate());
         voucher.setIsPublished(request.getIsPublished());
         voucher.setUserId(request.getUserId());
+        voucher.setImageUrl(request.getImageUrl());
         if (request.getStartDate() != null && request.getStartDate().isAfter(now)) {
             voucher.setStatus(VoucherStatus.INACTIVE);
         } else {
