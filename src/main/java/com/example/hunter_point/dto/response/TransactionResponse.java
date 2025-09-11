@@ -20,4 +20,5 @@ public class TransactionResponse {
     private LocalDateTime createdAt;
     private Long userId;
     private TransactionStatus status;
+    private String codeTransaction;
 }
