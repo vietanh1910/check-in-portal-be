@@ -12,6 +12,7 @@ import com.example.hunter_point.service.VoucherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,13 +26,18 @@ public class VoucherController {
 
     private final VoucherService voucherService;
 
+    @GetMapping()
+    public ResponseEntity<List<VoucherResponse>> getAll() {
+        return ResponseEntity.ok(voucherService.getAll());
+    }
+
     // --- CÁC ENDPOINT CRUD CỦA BẠN (Đã rất tốt, giữ nguyên) ---
-    @GetMapping
+    @GetMapping("/get-all-for-user")
     public ResponseEntity<List<VoucherResponse>> getAllAvailableForUser(Authentication authentication) {
         // Lấy userId từ token... (Logic này bạn cần tự hoàn thiện)
-        Long currentUserId = 1L; // Tạm thời hardcode để test
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         // Gọi một method mới trong service để lấy voucher có thể đổi
-        return ResponseEntity.ok(voucherService.getAvailableVouchersForUser(currentUserId));
+        return ResponseEntity.ok(voucherService.getAvailableVouchersForUser(userDetails.getId()));
     }
     // ... các endpoint GET, POST, PUT, DELETE khác giữ nguyên ...
     @GetMapping("/{id}")

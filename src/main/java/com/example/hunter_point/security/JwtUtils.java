@@ -27,9 +27,6 @@ public class JwtUtils {
     @Value("${jwt.expiration.ms}")
     private int jwtLoginExpirationMs;
 
-    // Thêm các key mới cho QR JWT
-    @Value("${jwt.qr.secret}")
-    private String jwtQrSecret;
 
     @Value("${jwt.qr.expiration.ms}")
     private long jwtQrExpirationMs;
