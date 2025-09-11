@@ -201,6 +201,7 @@ public class VoucherServiceImpl implements VoucherService {
                 .status(VoucherStatus.ACTIVE)
                 .isPublished(request.getIsPublished())
                 .userId(request.getUserId())
+                .imageUrl(request.getImageUrl())
                 .build();
     }
 }

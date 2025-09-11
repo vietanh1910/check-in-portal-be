@@ -52,6 +52,7 @@ public class Voucher {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
     private String imageUrl;
 }
 

@@ -127,12 +127,12 @@ public class CampaignServiceImpl implements CampaignService {
         if (authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ADMIN.name()))) {
             // ADMIN: Lấy tất cả
-            pageResult = campaignRepository.findAll(pageable);
+            pageResult = campaignRepository.findAllByOrderByCreatedAtDesc(pageable);
 
         } else if (authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + ERole.ALLOCATOR.name()))) {
             // ALLOCATOR: Lấy campaign do allocator này tạo
-            pageResult = campaignRepository.findByAllocatorId(userDetails.getId(), pageable);
+            pageResult = campaignRepository.findByAllocatorIdOrderByCreatedAtDesc(userDetails.getId(), pageable);
 
         } else {
             // USER: Tính khoảng cách -> xa dần

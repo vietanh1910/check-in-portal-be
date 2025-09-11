@@ -18,5 +18,6 @@ public class VoucherRequest {
     private LocalDateTime endDate;
     private Boolean isPublished;
     private Long userId;
+    private String imageUrl;
 }
 
