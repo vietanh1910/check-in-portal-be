@@ -68,7 +68,7 @@ public class JwtUtils {
     // --- LOGIC MỚI CHO QR TOKEN ---
 
     private Key getQrSigningKey() {
-        return Keys.hmacShaKeyFor(jwtQrSecret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtLoginSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateQrToken(Long redemptionHistoryId, Long userId) {

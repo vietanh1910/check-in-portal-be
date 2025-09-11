@@ -66,10 +66,11 @@ public class CampaignServiceImpl implements CampaignService {
                 .allocator(userOptional.get())
                 .name(requestDTO.getName())
                 .description(requestDTO.getDescription())
-                .locationName(requestDTO.getLocationName())
+                .locationName("Số 13 Trịnh Văn Bô")
+                .address("Số 13 Trịnh Văn Bô")
                 .latitude(requestDTO.getLatitude())
                 .longitude(requestDTO.getLongitude())
-                .radiusMeters(requestDTO.getRadiusMeters() != null ? requestDTO.getRadiusMeters() : 50)
+                .radiusMeters(50)
                 .requiredWifiSsid(requestDTO.getRequiredWifiSsid())
                 .requiredWifiBssid(requestDTO.getRequiredWifiBssid())
                 .pointsPerCheckin(requestDTO.getPointsPerCheckin())
@@ -93,6 +94,9 @@ public class CampaignServiceImpl implements CampaignService {
                 .userId(userOptional.get().getId())
                 .campaignId(campaign.getId())
                 .build();
+        User allocator = userOptional.get();
+        allocator.setPoints(allocator.getPoints() - requestDTO.getTotalBudget());
+        userRepository.save(allocator);
         transactionRepository.save(transaction);
         return GenerateResponse.generateSuccessSimpleResponse();
     }
@@ -265,6 +269,7 @@ public class CampaignServiceImpl implements CampaignService {
                 .createdAt(campaign.getCreatedAt().format(DATETIME_FORMATTER))
                 .updatedAt(campaign.getUpdatedAt().format(DATETIME_FORMATTER))
                 .radiusMeters(campaign.getRadiusMeters())
+                .address(campaign.getLocationName())
                 .build();
     }
 

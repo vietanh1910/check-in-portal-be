@@ -86,9 +86,6 @@ public class CheckInServiceImpl implements CheckInService {
         }
 
         // 2. Validate số lượt check-in
-        if (campaign.getMaxCheckinsPerUser() == 0) {
-            throw new RuntimeException("Campaign check-in limit reached");
-        }
 
         // 3. Update campaign (tăng lượt đã dùng)
         campaign.setCheckIns(campaign.getCheckIns() + 1);
