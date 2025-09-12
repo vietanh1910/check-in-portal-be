@@ -196,7 +196,7 @@ public class VoucherServiceImpl implements VoucherService {
                 .maxDiscount(request.getMaxDiscount())
                 .pointCost(request.getPointCost())
                 .quantity(request.getQuantity())
-                .claimed(request.getClaimed())
+                .claimed(0)
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status(VoucherStatus.ACTIVE)
