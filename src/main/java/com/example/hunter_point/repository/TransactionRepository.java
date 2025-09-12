@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,5 +56,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         ORDER BY DAY(t.createdAt)
     """)
     List<Object[]> getDailyRevenueThisMonth();
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.type = 'TOPUP'
+          AND t.status = 'COMPLETED'
+    """)
+    Double sumTotalRevenue();
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.type = 'TOPUP'
+          AND t.status = 'COMPLETED'
+          AND YEAR(t.createdAt) = :#{#month.year}
+          AND MONTH(t.createdAt) = :#{#month.monthValue}
+    """)
+    Double sumRevenueByMonth(YearMonth month);
 }
 

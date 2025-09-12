@@ -1,9 +1,13 @@
 package com.example.hunter_point.service.impl;
 
 import com.example.hunter_point.dto.response.DailyRevenueResponse;
+import com.example.hunter_point.dto.response.DashboardItemResponse;
 import com.example.hunter_point.dto.response.MonthlyRevenueResponse;
 import com.example.hunter_point.dto.response.TopAllocatorResponse;
+import com.example.hunter_point.entity.enums.ERole;
+import com.example.hunter_point.entity.enums.UserStatus;
 import com.example.hunter_point.repository.TransactionRepository;
+import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.service.DashboardService;
 import com.example.hunter_point.utils.response.GenerateResponse;
 import com.example.hunter_point.utils.response.ListResponse;
@@ -21,6 +25,7 @@ import java.util.stream.Collectors;
 public class DashboardServiceImpl implements DashboardService {
 
     private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
 
     @Override
     public ListResponse<TopAllocatorResponse> getTopMerchants() {
@@ -78,6 +83,59 @@ public class DashboardServiceImpl implements DashboardService {
                     revenueMap.getOrDefault(d, 0.0)
             ));
         }
+
+        return GenerateResponse.generateSuccessListResponse(result, result.size());
+    }
+
+    @Override
+    public ListResponse<DashboardItemResponse> getDashboardAdmin() {
+        List<DashboardItemResponse> result = new ArrayList<>();
+
+        // 1. Total Revenue
+        Double totalRevenue = transactionRepository.sumTotalRevenue();
+        Double lastMonthRevenue = transactionRepository.sumRevenueByMonth(YearMonth.now().minusMonths(1));
+        double revenueGrowth = lastMonthRevenue != 0 ?
+                ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+
+        result.add(new DashboardItemResponse(
+                "Total Revenue",
+                totalRevenue,
+                String.format("%+.1f%% from last month", revenueGrowth)
+        ));
+
+        // 2. Current Month Revenue
+        Double currentMonthRevenue = transactionRepository.sumRevenueByMonth(YearMonth.now());
+        Double prevMonthRevenue = lastMonthRevenue;
+        double growth = prevMonthRevenue != 0 ?
+                ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : 0;
+
+        result.add(new DashboardItemResponse(
+                "Current Month Revenue",
+                currentMonthRevenue,
+                String.format("%+.1f%% from last month", growth)
+        ));
+
+        // 3. Total Users
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countUserByStatus(UserStatus.ACTIVE);
+        long inactiveUsers = userRepository.countUserByStatus(UserStatus.INACTIVE);
+
+        result.add(new DashboardItemResponse(
+                "Total Users",
+                totalUsers,
+                String.format("%,d active • %,d inactive", activeUsers, inactiveUsers)
+        ));
+
+        // 4. Total Merchants
+        long totalMerchants = userRepository.countByRole(ERole.ALLOCATOR);
+        long activeMerchants = userRepository.countByRoleAndStatus(ERole.ALLOCATOR, UserStatus.ACTIVE);
+        long suspendedMerchants = userRepository.countByRoleAndStatus(ERole.ALLOCATOR, UserStatus.SUSPENDED);
+
+        result.add(new DashboardItemResponse(
+                "Total Merchants",
+                totalMerchants,
+                String.format("%,d active • %,d suspended", activeMerchants, suspendedMerchants)
+        ));
 
         return GenerateResponse.generateSuccessListResponse(result, result.size());
     }
