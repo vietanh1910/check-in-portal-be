@@ -1,11 +1,9 @@
 package com.example.hunter_point.service.impl;
 
-import com.example.hunter_point.dto.response.DailyRevenueResponse;
-import com.example.hunter_point.dto.response.DashboardItemResponse;
-import com.example.hunter_point.dto.response.MonthlyRevenueResponse;
-import com.example.hunter_point.dto.response.TopAllocatorResponse;
+import com.example.hunter_point.dto.response.*;
 import com.example.hunter_point.entity.enums.ERole;
 import com.example.hunter_point.entity.enums.UserStatus;
+import com.example.hunter_point.repository.CheckInRepository;
 import com.example.hunter_point.repository.TransactionRepository;
 import com.example.hunter_point.repository.UserRepository;
 import com.example.hunter_point.service.DashboardService;
@@ -14,7 +12,9 @@ import com.example.hunter_point.utils.response.ListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +26,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final CheckInRepository checkInRepository;
 
     @Override
     public ListResponse<TopAllocatorResponse> getTopMerchants() {
@@ -137,6 +138,43 @@ public class DashboardServiceImpl implements DashboardService {
                 String.format("%,d active • %,d suspended", activeMerchants, suspendedMerchants)
         ));
 
+        return GenerateResponse.generateSuccessListResponse(result, result.size());
+    }
+
+    @Override
+    public ListResponse<DailyCheckinResponse> getDailyCheckinsByAllocator(Long allocatorId) {
+        List<Object[]> rawData = checkInRepository.findDailyCheckinsByAllocator(allocatorId);
+
+        // Map ngày (1-31) -> số lượng check-in
+        Map<Integer, Long> checkinMap = rawData.stream()
+                .collect(Collectors.toMap(
+                        r -> ((java.sql.Date) r[0]).toLocalDate().getDayOfMonth(),
+                        r -> ((Number) r[1]).longValue()
+                ));
+
+        // Xác định tháng hiện tại
+        YearMonth currentMonth = YearMonth.now();
+        int daysInMonth = currentMonth.lengthOfMonth();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        List<DailyCheckinResponse> result = new ArrayList<>();
+
+        for (int day = 1; day <= daysInMonth; day++) {
+            LocalDate date = currentMonth.atDay(day);
+            result.add(new DailyCheckinResponse(
+                    date.format(formatter),                // format dd-MM-yyyy
+                    checkinMap.getOrDefault(day, 0L)       // số check-in hoặc 0
+            ));
+        }
+
+        return GenerateResponse.generateSuccessListResponse(result, result.size());
+    }
+
+
+    @Override
+    public ListResponse<CampaignPointResponse> getCampaignPoints(Long allocatorId) {
+        List<CampaignPointResponse> result = checkInRepository.findCampaignPointsByAllocator(allocatorId);
         return GenerateResponse.generateSuccessListResponse(result, result.size());
     }
 }
