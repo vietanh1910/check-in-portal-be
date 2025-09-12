@@ -47,7 +47,7 @@ public class CustomExceptionHandler {
     // (Tùy chọn) Bắt tất cả các lỗi khác và trả về 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
-        Map<String, String> body = Map.of("error", "An unexpected internal server error occurred.");
+        Map<String, String> body = Map.of("error", "An unexpected internal server error occurred." + ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

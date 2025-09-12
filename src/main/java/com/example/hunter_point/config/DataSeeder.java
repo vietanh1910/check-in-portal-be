@@ -72,7 +72,6 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Users seeded successfully.");
         }
 
-
         // --- SEED VOUCHERS ---
         if (voucherRepository.count() == 0) {
             System.out.println("Seeding vouchers...");
